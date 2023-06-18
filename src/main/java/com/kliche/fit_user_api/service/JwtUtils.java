@@ -43,6 +43,6 @@ public class JwtUtils {
 
     public static String extractEmailFromToken(String token) {
         Claims claims = Jwts.parserBuilder()
-                .setSigningKey(SECRET_KEY)
+                .setSigningKey(SECRET_KEY)a
     }
 }
