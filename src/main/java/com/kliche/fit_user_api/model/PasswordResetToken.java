@@ -26,11 +26,11 @@ public class PasswordResetToken {
     public PasswordResetToken(User user, String token) {
         this.user = user;
         this.token = token;
-        this.expiration_date = LocalDateTime.now().plusMinutes(30);
+        this.expiration_date = LocalDateTime.now().plusMinutes(1);
     }
 
     public PasswordResetToken() {
-        this.expiration_date = LocalDateTime.now().plusMinutes(30);
+        this.expiration_date = LocalDateTime.now().plusMinutes(1);
     }
 
     public boolean isExpired() {

@@ -15,7 +15,7 @@ public class TokenCleanupJob {
         this.passwordResetTokenRepository = passwordResetTokenRepository;
     }
 
-    @Scheduled(cron = "0 0 * * *")
+    @Scheduled(cron = "0 * * * *")
     public void removeExpiredTokens() {
         LocalDateTime now = LocalDateTime.now();
         passwordResetTokenRepository.deleteExpiredTokens(now);
