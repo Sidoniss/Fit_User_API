@@ -11,6 +11,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -81,82 +83,40 @@ public class AuthController {
     @PostMapping("request")
     public ResponseEntity<String> requestPasswordReset(@RequestBody recoverDto recoverDto) {
         String email = recoverDto.getEmail();
-        passwordResetService.generatePasswordResetToken(email);
-        return ResponseEntity.ok("Token resetu hasła został wysłany na podany adres email.");
+        try {
+            passwordResetService.generatePasswordResetToken(email);
+            return ResponseEntity.ok("Token resetu hasła został wysłany na podany adres email.");
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 
     @PostMapping("/reset")
     public ResponseEntity<String> resetPassword(@RequestBody PasswordResetRequestDTO requestDTO) {
         String token = requestDTO.getToken();
         String newPassword = requestDTO.getNewPassword();
-        passwordResetService.resetPassword(token,newPassword);
-        return ResponseEntity.ok("Twoje hasło zostało zresetowane.");
+        try {
+            passwordResetService.resetPassword(token,newPassword);
+            return ResponseEntity.ok("Twoje hasło zostało zresetowane.");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
+    }
+
+    @PostMapping("/change-password")
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest request) {
+        String email = request.getEmail();
+        String oldPassword = request.getOldPassword();
+        String newPassword = request.getNewPassword();
+
+        try {
+            passwordResetService.changePassword(email,oldPassword,newPassword);
+            return ResponseEntity.ok("Hasło zostało zmienione.");
+        } catch (UsernameNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        }
     }
 }
 
-
-
-
-
-
-
-
-/*public class AuthController {
-
-    private final UserService userService;
-
-    public AuthController(UserService userService) {
-        this.userService = userService;
-    }
-
-    @PostMapping("/regitration")
-    public
-
-
-
-
-//    @PostMapping("/registration")
-//    public ResponseEntity<?> registerUser(@RequestBody UserRegistrationRequest userRegistrationRequest) {
-//        System.out.println("Inside registerUser method");
-//        String email = userRegistrationRequest.getEmail();
-//        String password = userRegistrationRequest.getPassword();
-//        String name = userRegistrationRequest.getName();
-//        System.out.println("Received data from request: " + userRegistrationRequest);
-//        System.out.println(email + " " + password + " " + name);
-//
-//        try {
-//            User user = userService.registerUser(email,password,name);
-//            return ResponseEntity.ok(user);
-//        } catch (RuntimeException e) {
-//            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
-//        }
-//    }
-
-    @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody UserLoginRequest userLoginRequest) {
-        String email = userLoginRequest.getEmail();
-        String password = userLoginRequest.getPassword();
-
-        User user = userService.findByEmail(email);
-        if (user == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nieprawidłowe dane uwierzytelniające.");
-        }
-
-        userService.login(user);
-
-        return ResponseEntity.ok("Zalogowano użytkownika: " + user.getEmail());
-    }
-
-    @PostMapping("/logout")
-    public ResponseEntity<?> logoutUser(@RequestBody UserLogoutRequest userLogoutRequest) {
-        String jwtToken = userLogoutRequest.getJwtToken();
-
-        if(!JwtUtils.validateToken(jwtToken)) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Nieprawidłowy token JWT. Wylogowanie nieudane.");
-        }
-
-        JwtUtils.logoutUser(jwtToken);
-
-        return ResponseEntity.ok("Wylogowano użytkownika.");
-    }
-}*/
