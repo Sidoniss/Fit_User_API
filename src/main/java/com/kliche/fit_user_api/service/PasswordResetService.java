@@ -62,6 +62,25 @@ public class PasswordResetService {
         passwordResetTokenRepository.delete(resetToken);
     }
 
+    public void changePassword(String email,String oldPassword, String newPassword) {
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if (userOptional.isEmpty()) {
+            throw new UsernameNotFoundException("Podany użytkownik nie istnieje.");
+        }
+
+        User user = userOptional.get();
+        String currentPassword = user.getPassword();
+
+        if(!passwordEncoder.matches(oldPassword,currentPassword)) {
+            throw new IllegalArgumentException("Niepoprawne stare hasło.");
+        }
+
+        String encodedNewPassword = encodePassword(newPassword);
+
+        user.setPassword(encodedNewPassword);
+        userRepository.save(user);
+    }
+
     public String encodePassword(String newPassword) {
         return passwordEncoder.encode(newPassword);
     }
