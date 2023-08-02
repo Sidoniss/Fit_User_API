@@ -1,11 +1,9 @@
 package com.kliche.fit_user_api.controller;
 
-import com.kliche.fit_user_api.model.LoginDto;
-import com.kliche.fit_user_api.model.Role;
-import com.kliche.fit_user_api.model.SignUpDto;
-import com.kliche.fit_user_api.model.User;
+import com.kliche.fit_user_api.model.*;
 import com.kliche.fit_user_api.repository.RoleRepository;
 import com.kliche.fit_user_api.repository.UserRepository;
+import com.kliche.fit_user_api.service.PasswordResetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +17,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collections;
 
 @RestController
@@ -36,19 +35,31 @@ public class AuthController {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    @Autowired
+    private final PasswordResetService passwordResetService;
+
+    public AuthController(PasswordResetService passwordResetService) {
+        this.passwordResetService = passwordResetService;
+    }
+
     @PostMapping("/signin")
-    public ResponseEntity<String> authenticateUser(@RequestBody LoginDto loginDto) {
+    public ResponseEntity<LoginResponse> authenticateUser(@RequestBody LoginDto loginDto) {
         Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
                 loginDto.getEmail(),loginDto.getPassword()));
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
-        return new ResponseEntity<>("User signed-in successfully!",HttpStatus.OK);
+
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setEmail(loginDto.getEmail());
+        return new ResponseEntity<>(loginResponse,HttpStatus.OK);
     }
 
     @PostMapping("signup")
-    public ResponseEntity<String> registerUser(@RequestBody SignUpDto signUpDto) {
+    public ResponseEntity<LoginResponse> registerUser(@RequestBody SignUpDto signUpDto) {
         if(userRepository.existsByEmail(signUpDto.getEmail())){
-            return new ResponseEntity<>("email is already taken!", HttpStatus.BAD_REQUEST);
+            LoginResponse loginResponse = new LoginResponse();
+            loginResponse.setEmail(signUpDto.getEmail());
+            return new ResponseEntity<>(loginResponse,HttpStatus.BAD_REQUEST);
         }
 
         User user = new User();
@@ -61,7 +72,25 @@ public class AuthController {
 
         userRepository.save(user);
 
-        return new ResponseEntity<>("User registered successfully!",HttpStatus.OK);
+        LoginResponse loginResponse = new LoginResponse();
+        loginResponse.setEmail(signUpDto.getEmail());
+
+        return new ResponseEntity<>(loginResponse,HttpStatus.OK);
+    }
+
+    @PostMapping("request")
+    public ResponseEntity<String> requestPasswordReset(@RequestBody recoverDto recoverDto) {
+        String email = recoverDto.getEmail();
+        passwordResetService.generatePasswordResetToken(email);
+        return ResponseEntity.ok("Token resetu hasła został wysłany na podany adres email.");
+    }
+
+    @PostMapping("/reset")
+    public ResponseEntity<String> resetPassword(@RequestBody PasswordResetRequestDTO requestDTO) {
+        String token = requestDTO.getToken();
+        String newPassword = requestDTO.getNewPassword();
+        passwordResetService.resetPassword(token,newPassword);
+        return ResponseEntity.ok("Twoje hasło zostało zresetowane.");
     }
 }
 
