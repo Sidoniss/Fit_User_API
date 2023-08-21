@@ -15,7 +15,9 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Collections;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -49,8 +51,15 @@ public class AuthController {
 
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
+        Optional<User> user = userRepository.findByEmail(loginDto.getEmail());
+        if (user == null) {
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        }
+
         LoginResponse loginResponse = new LoginResponse();
         loginResponse.setEmail(loginDto.getEmail());
+        loginResponse.setName(user.get().getName());
+        loginResponse.setAccountCreationDate(user.get().getAccountCreationDate().toString());
         return new ResponseEntity<>(loginResponse,HttpStatus.OK);
     }
 
@@ -66,6 +75,7 @@ public class AuthController {
         user.setEmail(signUpDto.getEmail());
         user.setName(signUpDto.getName());
         user.setPassword(passwordEncoder.encode(signUpDto.getPassword()));
+        user.setAccountCreationDate(LocalDate.now());
 
         Role roles = roleRepository.findByName("ROLE_USER").get();
         user.setRoles(Collections.singleton(roles));

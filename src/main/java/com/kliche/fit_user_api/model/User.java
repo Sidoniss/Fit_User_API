@@ -4,6 +4,8 @@ package com.kliche.fit_user_api.model;
 import jakarta.persistence.*;
 import lombok.Data;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Set;
 
 @Data
@@ -18,6 +20,7 @@ public class User {
     private String email;
     private String password;
     private String name;
+    private LocalDate accountCreationDate;
 
     @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
     @JoinTable(name = "user_roles",
