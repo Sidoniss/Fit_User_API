@@ -3,6 +3,7 @@ package com.kliche.fit_user_api.controller;
 import com.kliche.fit_user_api.model.*;
 import com.kliche.fit_user_api.repository.RoleRepository;
 import com.kliche.fit_user_api.repository.UserRepository;
+import com.kliche.fit_user_api.service.CustomUserDetailsService;
 import com.kliche.fit_user_api.service.PasswordResetService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -24,68 +25,41 @@ import java.util.Optional;
 public class AuthController {
     @Autowired
     private AuthenticationManager authenticationManager;
-
     @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
+    private CustomUserDetailsService userDetailsService;
     @Autowired
     private final PasswordResetService passwordResetService;
-
-
 
     public AuthController(PasswordResetService passwordResetService) {
         this.passwordResetService = passwordResetService;
     }
 
-
     @PostMapping("/signin")
     public ResponseEntity<LoginResponse> authenticateUser(@RequestBody LoginDto loginDto) {
-        Authentication authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(
-                loginDto.getEmail(),loginDto.getPassword()));
-
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginDto.getEmail(), loginDto.getPassword()));
         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        Optional<User> user = userRepository.findByEmail(loginDto.getEmail());
-        if (user == null) {
+        Optional<User> user = userDetailsService.authenticateUser(loginDto);
+        if (user.isEmpty()) {
             return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         }
 
-        LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setEmail(loginDto.getEmail());
-        loginResponse.setName(user.get().getName());
-        loginResponse.setAccountCreationDate(user.get().getAccountCreationDate().toString());
-        return new ResponseEntity<>(loginResponse,HttpStatus.OK);
+        LoginResponse loginResponse = userDetailsService.createLoginResponse(user.get());
+        return new ResponseEntity<>(loginResponse, HttpStatus.OK);
     }
 
     @PostMapping("signup")
     public ResponseEntity<LoginResponse> registerUser(@RequestBody SignUpDto signUpDto) {
-        if(userRepository.existsByEmail(signUpDto.getEmail())){
+        try {
+            User user = userDetailsService.registerUser(signUpDto);
+            LoginResponse loginResponse = userDetailsService.createLoginResponse(user);
+            return new ResponseEntity<>(loginResponse, HttpStatus.OK);
+        } catch (Exception e) {
             LoginResponse loginResponse = new LoginResponse();
             loginResponse.setEmail(signUpDto.getEmail());
-            return new ResponseEntity<>(loginResponse,HttpStatus.BAD_REQUEST);
+            return new ResponseEntity<>(loginResponse, HttpStatus.BAD_REQUEST);
         }
-
-        User user = new User();
-        user.setEmail(signUpDto.getEmail());
-        user.setName(signUpDto.getName());
-        user.setPassword(passwordEncoder.encode(signUpDto.getPassword()));
-        user.setAccountCreationDate(LocalDate.now());
-
-        Role roles = roleRepository.findByName("ROLE_USER").get();
-        user.setRoles(Collections.singleton(roles));
-
-        userRepository.save(user);
-
-        LoginResponse loginResponse = new LoginResponse();
-        loginResponse.setEmail(signUpDto.getEmail());
-
-        return new ResponseEntity<>(loginResponse,HttpStatus.OK);
     }
 
     @PostMapping("request")
@@ -112,7 +86,7 @@ public class AuthController {
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordRequest request) {
+    public ResponseEntity<String> changePassword(@RequestBody ChangePasswordDTO request) {
         String email = request.getEmail();
         String oldPassword = request.getOldPassword();
         String newPassword = request.getNewPassword();
