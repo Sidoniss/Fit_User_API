@@ -3,10 +3,7 @@ package com.kliche.fit_user_api.model;
 
 import jakarta.persistence.*;
 import lombok.Data;
-
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.util.Set;
 
 @Data
 @Entity

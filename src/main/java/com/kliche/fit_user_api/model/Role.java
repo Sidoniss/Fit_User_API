@@ -1,7 +1,6 @@
 package com.kliche.fit_user_api.model;
 
 import jakarta.persistence.*;
-import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 

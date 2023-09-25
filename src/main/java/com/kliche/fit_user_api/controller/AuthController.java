@@ -1,8 +1,6 @@
 package com.kliche.fit_user_api.controller;
 
 import com.kliche.fit_user_api.model.*;
-import com.kliche.fit_user_api.repository.RoleRepository;
-import com.kliche.fit_user_api.repository.UserRepository;
 import com.kliche.fit_user_api.service.CustomUserDetailsService;
 import com.kliche.fit_user_api.service.PasswordResetService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,11 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.*;
-
-import java.time.LocalDate;
-import java.util.Collections;
 import java.util.Optional;
 
 @RestController

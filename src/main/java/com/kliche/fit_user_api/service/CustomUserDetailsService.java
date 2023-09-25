@@ -4,7 +4,6 @@ import com.kliche.fit_user_api.model.*;
 import com.kliche.fit_user_api.repository.RoleRepository;
 import com.kliche.fit_user_api.repository.UserRepository;
 import org.apache.commons.validator.routines.EmailValidator;
-import org.aspectj.apache.bcel.Repository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -13,24 +12,19 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
-
     @Autowired
     private final UserRepository userRepository;
     @Autowired
     private RoleRepository roleRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
-
-
 
     public CustomUserDetailsService(UserRepository userRepository) {
         this.userRepository = userRepository;
