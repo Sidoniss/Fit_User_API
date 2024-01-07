@@ -9,3 +9,4 @@ Jako iż aplikacja jest odpalana lokalnie, aby otrzymać mail z tokenem należy 
 wszystkie dane potrzebne do prawidłowej wysyłki na swojego Mailtrapa należy podmienić w pliku properties
 
 # do działania Wymagana jest baza danych z obrazu .tar
+https://drive.google.com/file/d/1RFuRc9k9K6V32d_OTWilwpiZUIdVrzNx/view?usp=sharing
